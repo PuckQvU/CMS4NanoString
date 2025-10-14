@@ -1,6 +1,6 @@
 # CMS4NanoString
 
-The consensus molecular subtypes (CMSs) of colorectal cancer can offer valuable insights into the biological nature of a tumor and are linked to patient prognosis and treatment outcomes. However, CMS classification remains largely unused in clinical research and patient care. In this project, we aim to address the technical challenges in using this classification scheme for NanoString nCounter data.
+The Consensus Molecular Subtypes (CMSs) of colorectal cancer can offer valuable insights into the biological nature of a tumor and are linked to patient prognosis and treatment outcomes. However, CMS classification remains largely unused in clinical research and patient care. In this project, we aim to address the technical challenges in using this classification scheme for NanoString nCounter data.
 
 The aims of this project were to:
 
