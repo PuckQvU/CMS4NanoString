@@ -11,7 +11,6 @@ format: html
 #| label: libraries
 
 library("tidyverse")
-library("ggVennDiagram")
 ```
 
 ## Load data
@@ -25,31 +24,150 @@ TCGA_exprs <- read_delim("../data/02_TCGA_exprs_clean.tsv")
 NS_genes <- read_delim("../data/01_NS_genes.tsv", delim = "\t")
 ```
 
-## Evaluate the coverage of NanoString genes in TCGA data
-
-```{r}
-#| label: eval_coverage
-#| message: false
-
-ggVennDiagram(list(
-  Genes_TCGA = TCGA_exprs$feature,
-  Genes_NS = NS_genes$ID
-)) + 
-  coord_flip() + 
-  theme(legend.position = "None") + 
-  labs(
-    title = "Coverage of NanoString genes in TCGA dataset"
-  )
-```
-
-Not every gene in the list has an exact match in the TCGA expression dataset, but the coverage is adequate for the purposes of this project.
-
 ## Subset the expression data 
 
 ```{r}
-#| label: subset_exprs
+#| label: subset_exprs_init
 
-TCGA_NS_subset <- TCGA_exprs |> 
+TCGA_NS_subset_init <- TCGA_exprs |> 
+  subset(feature %in% NS_genes$ID)
+```
+
+## Evaluate the coverage
+
+```{r}
+#| label: check genes
+
+setdiff(NS_genes$ID, TCGA_NS_subset_init$feature)
+
+# Manually check the 21 unmatched genes
+all_genes <- sort(TCGA_exprs$feature)
+
+# ADGRE1: no match
+all_genes[str_starts(all_genes, "ADG")]
+
+# AM30A: no match
+all_genes[str_starts(all_genes, "AM3")]
+
+# CCL3/L1: combine CCL3 and CCL3L1
+all_genes[str_starts(all_genes, "CCL")]
+
+# CD45RA: no match
+# CD45RB: no match
+# CD45RO: no match
+all_genes[str_starts(all_genes, "CD4")]
+
+# CXCL8: no match
+all_genes[str_starts(all_genes, "CXCL")]
+
+# DEPTOR: no match
+all_genes[str_starts(all_genes, "DEP")]
+
+# ELOB: no match
+all_genes[str_starts(all_genes, "ELO")]
+
+# ERO1A: no match
+all_genes[str_starts(all_genes, "ERO")]
+
+# FCGR3A/B: combine FCGR3A and FCGR3B
+all_genes[str_starts(all_genes, "FCGR")]
+
+# MAGEA3/A6: combine MAGEA3 and MAGEA6
+all_genes[str_starts(all_genes, "MAGE")]
+
+# MB21D1: no match
+all_genes[str_starts(all_genes, "MB21")]
+
+# MRE11: rename MRE11A
+all_genes[str_starts(all_genes, "MRE")]
+
+# NECTIN1: no match
+# NECTIN2: no match
+all_genes[str_starts(all_genes, "NECTIN")]
+
+# NRDE2: no match
+all_genes[str_starts(all_genes, "NRD")]
+
+# PKM: rename PKM2
+all_genes[str_starts(all_genes, "PK")]
+
+# TPSAB1/B2: combine TPSAB1 and TPSB2
+all_genes[str_starts(all_genes, "TPS")]
+
+# VSIR: no match
+all_genes[str_starts(all_genes, "VSI")]
+
+# XCL1/2: combine XCL1 and XCL2
+all_genes[str_starts(all_genes, "XCL")]
+```
+
+## Correct genes
+
+```{r}
+#| label: correct genes
+
+# Probes capturing two genes
+expr_cols <- setdiff(colnames(TCGA_exprs), "feature")
+
+# CCL3/L1: combine CCL3 and CCL3L1
+ccl3_row <- TCGA_exprs[TCGA_exprs$feature == "CCL3", ]
+ccl3l1_row <- TCGA_exprs[TCGA_exprs$feature == "CCL3L1", ]
+ccl3_lin <- 2^as.numeric(ccl3_row[, expr_cols]) - 1
+ccl3l1_lin <- 2^as.numeric(ccl3l1_row[, expr_cols]) - 1
+ccl33l1_lin <- ccl3_lin + ccl3l1_lin
+ccl33l1_log <- log2(ccl33l1_lin + 1)
+ccl33l1_row <- c("CCL3/L1", ccl33l1_log)
+
+# FCGR3A/B: 
+fcgr3a_row <- TCGA_exprs[TCGA_exprs$feature == "FCGR3A", ]
+fcgr3b_row <- TCGA_exprs[TCGA_exprs$feature == "FCGR3B", ]
+fcgr3a_lin <- 2^as.numeric(fcgr3a_row[, expr_cols]) - 1
+fcgr3b_lin <- 2^as.numeric(fcgr3b_row[, expr_cols]) - 1
+fcgr3ab_lin <- fcgr3a_lin + fcgr3b_lin
+fcgr3ab_log <- log2(fcgr3ab_lin + 1)
+fcgr3ab_row <- c("FCGR3A/B", fcgr3ab_log)
+
+# MAGEA3/A6:
+magea3_row <- TCGA_exprs[TCGA_exprs$feature == "MAGEA3", ]
+magea6_row <- TCGA_exprs[TCGA_exprs$feature == "MAGEA6", ]
+magea3_lin <- 2^as.numeric(magea3_row[, expr_cols]) - 1
+magea6_lin <- 2^as.numeric(magea6_row[, expr_cols]) - 1
+magea3a6_lin <- magea3_lin + magea6_lin
+magea3a6_log <- log2(magea3a6_lin + 1)
+magea3a6_row <- c("MAGEA3/A6", magea3a6_log)
+
+# TPSAB1/B2:
+tpsab1_row <- TCGA_exprs[TCGA_exprs$feature == "TPSAB1", ]
+tpsb2_row <- TCGA_exprs[TCGA_exprs$feature == "TPSB2", ]
+tpsab1_lin <- 2^as.numeric(tpsab1_row[, expr_cols]) - 1
+tpsb2_lin <- 2^as.numeric(tpsb2_row[, expr_cols]) - 1
+tpsab1b2_lin <- tpsab1_lin + tpsb2_lin
+tpsab1b2_log <- log2(tpsab1b2_lin + 1)
+tpsab1b2_row <- c("TPSAB1/B2", tpsab1b2_log)
+
+## XCL1/2:
+xcl1_row <- TCGA_exprs[TCGA_exprs$feature == "XCL1", ]
+xcl2_row <- TCGA_exprs[TCGA_exprs$feature == "XCL2", ]
+xcl1_lin <- 2^as.numeric(xcl1_row[, expr_cols]) - 1
+xcl2_lin <- 2^as.numeric(xcl2_row[, expr_cols]) - 1
+xcl12_lin <- xcl1_lin + xcl2_lin
+xcl12_log <- log2(xcl12_lin + 1)
+xcl12_row <- c("XCL1/2", xcl12_log)
+
+TCGA_exprs_new <- rbind(TCGA_exprs, ccl33l1_row, fcgr3ab_row, magea3a6_row, tpsab1b2_row, xcl12_row)
+
+# Rename genes
+TCGA_exprs_new$feature[TCGA_exprs_new$feature == "MRE11A"] <- "MRE11"
+TCGA_exprs_new$feature[TCGA_exprs_new$feature == "PKM2"] <- "PKM"
+
+```
+
+## Subset the final expression data 
+
+```{r}
+#| label: subset_exprs_fin
+
+TCGA_NS_subset <- TCGA_exprs_new |> 
   subset(feature %in% NS_genes$ID)
 ```
 
