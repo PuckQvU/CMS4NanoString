@@ -17,5 +17,3 @@ The data that was used for this project was obtained from the Colorectal Cancer 
 ## Folder structure
 
 The R folder contains 11 ordered quarto files that allow you to reproduce the results of this project.
-
-The results folder contains statistics on the performance of each of the models. It also contains HTML files that were rendered from the files in the R folder, which show the code as well as the results that were obtained.
