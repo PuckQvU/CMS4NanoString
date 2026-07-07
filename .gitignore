@@ -6,8 +6,7 @@ SpaceRAT_CRC.Rproj
 _quarto.yml
 .Rbuildignore
 data/
+results/
 /.quarto/
 R/figs.qmd
 R/test*
-results/R/test*
-results/paper_figs/
